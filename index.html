@@ -45,21 +45,26 @@ body{background:#07090f;font-family:sans-serif}
   <div class="pf-offline-icon">📡</div>
   <div class="pf-offline-title">Servidor offline</div>
   <div class="pf-offline-sub">O portfólio está temporariamente indisponível. Tente novamente em alguns instantes.</div>
-  <button class="pf-retry" onclick="init()">Tentar novamente</button>
+  <button class="pf-retry" onclick="window.init()">Tentar novamente</button>
 </div>
 
 <iframe id="pf-iframe" src="about:blank" title="Portfólio Gko"></iframe>
 
 <script>
 (function(){
-  var GHBASE = window.location.origin + window.location.pathname.replace(/\/+$/, '');
+  var GHBASE   = window.location.origin + window.location.pathname.replace(/\/+$/, '');
   var LINK_TXT = GHBASE + '/link.txt';
+  // Tempo máximo (ms) esperando o iframe carregar antes de considerar offline
+  var IFRAME_TIMEOUT = 12000;
 
   var iframe  = document.getElementById('pf-iframe');
   var loader  = document.getElementById('pf-loader');
   var offline = document.getElementById('pf-offline');
+  var iframeTimer = null;
 
   function showOffline() {
+    if (iframeTimer) { clearTimeout(iframeTimer); iframeTimer = null; }
+    iframe.src = 'about:blank';
     loader.classList.add('hidden');
     offline.classList.add('show');
   }
@@ -93,9 +98,54 @@ body{background:#07090f;font-family:sans-serif}
       if(extras.length) dest+='?'+extras.join('&');
     }
 
+    // Dispara timer: se o iframe não carregar em IFRAME_TIMEOUT ms → offline
+    if (iframeTimer) clearTimeout(iframeTimer);
+    iframeTimer = setTimeout(function() {
+      // Verifica se o link.txt mudou enquanto aguardávamos (tunnel reconectou)
+      fetch(LINK_TXT + '?_=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.text(); })
+        .then(function(txt){
+          var url = txt.trim();
+          if (url && url !== 'offline' && url !== 'manutencao' && url.startsWith('http') && url !== tunnel) {
+            // URL mudou — tunnel reconectou com novo endereço, tenta de novo
+            showIframe(url);
+          } else {
+            showOffline();
+          }
+        })
+        .catch(function(){ showOffline(); });
+    }, IFRAME_TIMEOUT);
+
+    iframe.onload = function() {
+      // Iframe carregou — cancela o timer de timeout
+      if (iframeTimer) { clearTimeout(iframeTimer); iframeTimer = null; }
+      loader.classList.add('hidden');
+    };
+
     iframe.src = dest;
-    iframe.onload = function(){ loader.classList.add('hidden'); };
-    setTimeout(function(){ loader.classList.add('hidden'); }, 10000);
+  }
+
+  // Sonda o tunnel antes de confiar na URL do link.txt
+  // Usa um fetch com timeout curto para ver se o servidor responde
+  function probeTunnel(url, callback) {
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(function() {
+      if (controller) controller.abort();
+      callback(false);
+    }, 6000);
+
+    var opts = { method: 'HEAD', mode: 'no-cors', cache: 'no-store' };
+    if (controller) opts.signal = controller.signal;
+
+    fetch(url, opts)
+      .then(function() {
+        clearTimeout(timer);
+        callback(true);
+      })
+      .catch(function() {
+        clearTimeout(timer);
+        callback(false);
+      });
   }
 
   window.init = function() {
@@ -106,11 +156,24 @@ body{background:#07090f;font-family:sans-serif}
       .then(function(r){ return r.text(); })
       .then(function(txt){
         var url = txt.trim();
+        // link.txt explicitamente offline/manutenção
         if (!url || url === 'offline' || url === 'manutencao' || !url.startsWith('http')) {
           showOffline();
-        } else {
-          showIframe(url);
+          return;
         }
+        // URL parece válida — sonda o tunnel antes de carregar o iframe
+        probeTunnel(url, function(alive) {
+          if (alive) {
+            showIframe(url);
+          } else {
+            // Tunnel não responde — mostra offline e agenda nova tentativa
+            showOffline();
+            // Tenta de novo automaticamente em 30s (tunnel pode estar reconectando)
+            setTimeout(function() {
+              if (offline.classList.contains('show')) window.init();
+            }, 30000);
+          }
+        });
       })
       .catch(function(){ showOffline(); });
   };
