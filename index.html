@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Portfólio · Gko</title>
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;overflow:hidden}
 body{background:#07090f;font-family:sans-serif}
@@ -19,19 +20,32 @@ body{background:#07090f;font-family:sans-serif}
 .pf-dot{width:10px;height:10px;border-radius:50%;background:#4fffb0;animation:pulse 1.2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 .pf-label{font-size:.8rem;color:#5d7a9b}
-/* tela offline */
+/* overlay offline — mesmo template visual das páginas estáticas */
 #pf-offline{
-  position:fixed;inset:0;background:#07090f;
+  position:fixed;inset:0;background:#07090f;color:#dde6f5;
   display:none;align-items:center;justify-content:center;
-  flex-direction:column;gap:1.2rem;color:#5d7a9b;z-index:99
+  padding:1.5rem;z-index:99;font-family:'Syne',sans-serif
 }
 #pf-offline.show{display:flex}
-.pf-offline-icon{font-size:3rem}
-.pf-offline-title{color:#c8d8e8;font-size:1.1rem;font-weight:600}
-.pf-offline-sub{font-size:.8rem;text-align:center;max-width:260px;line-height:1.5}
-.pf-retry{margin-top:.5rem;padding:.5rem 1.2rem;background:#1a2a3a;border:1px solid #2a4a6a;
-  border-radius:6px;color:#4fffb0;cursor:pointer;font-size:.85rem}
-.pf-retry:hover{background:#2a3a4a}
+#pf-offline .card{background:#111820;border:1px solid #1c2535;border-radius:20px;
+  padding:2.4rem 2rem;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.55);text-align:center}
+#pf-offline .badge{display:inline-flex;align-items:center;gap:.5rem;font-family:'DM Mono',monospace;
+  font-size:.72rem;border-radius:20px;padding:.3rem .9rem;margin-bottom:1.8rem;border:1px solid;
+  color:#ef4444;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)}
+#pf-offline .dot{width:7px;height:7px;border-radius:50%;background:#ef4444;animation:pulse 1.5s infinite}
+#pf-offline h1{font-size:clamp(1.8rem,6vw,2.6rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:.6rem}
+#pf-offline h1 em{font-style:normal;background:linear-gradient(125deg,#ef4444,#38bdf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#pf-offline .sub{font-size:.9rem;color:#5d7a9b;margin-bottom:1.8rem;line-height:1.6}
+#pf-offline .msg{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:12px;
+  padding:1.4rem;font-size:.88rem;color:#fca5a5;margin-bottom:2rem;line-height:1.7}
+#pf-offline .links{display:flex;flex-direction:column;gap:.6rem;margin-top:1.2rem}
+#pf-offline .contact-link{display:flex;align-items:center;gap:.75rem;padding:.75rem .9rem;background:#0d1117;
+  border:1px solid #1c2535;border-radius:10px;text-decoration:none;color:#dde6f5;font-size:.88rem;transition:all .2s}
+#pf-offline .contact-link:hover{border-color:#ef4444;color:#ef4444;transform:translateX(4px)}
+#pf-offline .pf-retry{margin-top:1.4rem;padding:.6rem 1.4rem;background:#1a2a3a;border:1px solid #2a4a6a;
+  border-radius:8px;color:#4fffb0;cursor:pointer;font-size:.85rem;font-family:inherit}
+#pf-offline .pf-retry:hover{background:#2a3a4a}
 </style>
 </head>
 <body>
@@ -42,10 +56,17 @@ body{background:#07090f;font-family:sans-serif}
 </div>
 
 <div id="pf-offline">
-  <div class="pf-offline-icon">📡</div>
-  <div class="pf-offline-title">Servidor offline</div>
-  <div class="pf-offline-sub">O portfólio está temporariamente indisponível. Tente novamente em alguns instantes.</div>
-  <button class="pf-retry" onclick="window.init()">Tentar novamente</button>
+  <div class="card">
+    <div class="badge"><span class="dot"></span> tunnel offline</div>
+    <h1>Gko<br><em>Portfólio</em></h1>
+    <p class="sub">Desenvolvedor Full Stack · PHP · JS · Mobile</p>
+    <div class="msg">📡 O túnel de conexão caiu.<br>Tentando reconectar automaticamente...</div>
+    <div class="links">
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.1em;color:#5d7a9b;margin-bottom:.8rem">ENTRE EM CONTATO</div>
+      <a href="https://github.com/gigllyan" target="_blank" class="contact-link"><span>⌥</span><span>Github</span></a><a href="https://linkedin.com/in/Gigllyan" target="_blank" class="contact-link"><span>in</span><span>Linkedin</span></a><a href="mailto:contato@exemplo.com" target="_blank" class="contact-link"><span>✉</span><span>Email</span></a><a href="https://instagram.com/gigllyan" target="_blank" class="contact-link"><span>📷</span><span>Instagram</span></a><a href="https://facebook.com/gigllyan" target="_blank" class="contact-link"><span>f</span><span>Facebook</span></a><a href="https://x.com/gigllyan" target="_blank" class="contact-link"><span>𝕏</span><span>Twitter</span></a><a href="https://wa.me/11999999999" target="_blank" class="contact-link"><span>💬</span><span>Whatsapp</span></a>
+    </div>
+    <button class="pf-retry" onclick="window.init()">Tentar novamente</button>
+  </div>
 </div>
 
 <iframe id="pf-iframe" src="about:blank" title="Portfólio Gko"></iframe>
@@ -54,7 +75,6 @@ body{background:#07090f;font-family:sans-serif}
 (function(){
   var GHBASE   = window.location.origin + window.location.pathname.replace(/\/+$/, '');
   var LINK_TXT = GHBASE + '/link.txt';
-  // Tempo máximo (ms) esperando o iframe carregar antes de considerar offline
   var IFRAME_TIMEOUT = 12000;
 
   var iframe  = document.getElementById('pf-iframe');
@@ -98,16 +118,13 @@ body{background:#07090f;font-family:sans-serif}
       if(extras.length) dest+='?'+extras.join('&');
     }
 
-    // Dispara timer: se o iframe não carregar em IFRAME_TIMEOUT ms → offline
     if (iframeTimer) clearTimeout(iframeTimer);
     iframeTimer = setTimeout(function() {
-      // Verifica se o link.txt mudou enquanto aguardávamos (tunnel reconectou)
       fetch(LINK_TXT + '?_=' + Date.now(), { cache: 'no-store' })
         .then(function(r){ return r.text(); })
         .then(function(txt){
           var url = txt.trim();
           if (url && url !== 'offline' && url !== 'manutencao' && url.startsWith('http') && url !== tunnel) {
-            // URL mudou — tunnel reconectou com novo endereço, tenta de novo
             showIframe(url);
           } else {
             showOffline();
@@ -117,7 +134,6 @@ body{background:#07090f;font-family:sans-serif}
     }, IFRAME_TIMEOUT);
 
     iframe.onload = function() {
-      // Iframe carregou — cancela o timer de timeout
       if (iframeTimer) { clearTimeout(iframeTimer); iframeTimer = null; }
       loader.classList.add('hidden');
     };
@@ -125,22 +141,25 @@ body{background:#07090f;font-family:sans-serif}
     iframe.src = dest;
   }
 
-  // Sonda o tunnel antes de confiar na URL do link.txt
-  // Usa um fetch com timeout curto para ver se o servidor responde
+  // Sonda o tunnel com CORS real (não no-cors) contra /ping.php.
+  // Se a origem estiver inacessível, o edge devolve erro sem o
+  // header CORS e o fetch falha de verdade — sem isso o no-cors
+  // antigo "sucedia" mesmo com a origem fora do ar.
   function probeTunnel(url, callback) {
+    var pingUrl = url.replace(/\/+$/, '') + '/ping.php';
     var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var timer = setTimeout(function() {
       if (controller) controller.abort();
       callback(false);
     }, 6000);
 
-    var opts = { method: 'HEAD', mode: 'no-cors', cache: 'no-store' };
+    var opts = { method: 'GET', mode: 'cors', cache: 'no-store' };
     if (controller) opts.signal = controller.signal;
 
-    fetch(url, opts)
-      .then(function() {
+    fetch(pingUrl, opts)
+      .then(function(res) {
         clearTimeout(timer);
-        callback(true);
+        callback(res.ok);
       })
       .catch(function() {
         clearTimeout(timer);
@@ -156,19 +175,15 @@ body{background:#07090f;font-family:sans-serif}
       .then(function(r){ return r.text(); })
       .then(function(txt){
         var url = txt.trim();
-        // link.txt explicitamente offline/manutenção
         if (!url || url === 'offline' || url === 'manutencao' || !url.startsWith('http')) {
           showOffline();
           return;
         }
-        // URL parece válida — sonda o tunnel antes de carregar o iframe
         probeTunnel(url, function(alive) {
           if (alive) {
             showIframe(url);
           } else {
-            // Tunnel não responde — mostra offline e agenda nova tentativa
             showOffline();
-            // Tenta de novo automaticamente em 30s (tunnel pode estar reconectando)
             setTimeout(function() {
               if (offline.classList.contains('show')) window.init();
             }, 30000);
@@ -178,7 +193,6 @@ body{background:#07090f;font-family:sans-serif}
       .catch(function(){ showOffline(); });
   };
 
-  // Sincroniza URL do GitHub com mensagens do iframe
   window.addEventListener('message', function(e) {
     var d = e.data;
     if (!d || typeof d !== 'object') return;
