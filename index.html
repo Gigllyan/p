@@ -20,7 +20,7 @@ body{background:#07090f;font-family:sans-serif}
 .pf-dot{width:10px;height:10px;border-radius:50%;background:#4fffb0;animation:pulse 1.2s infinite}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
 .pf-label{font-size:.8rem;color:#5d7a9b}
-/* overlay offline — mesmo template visual das páginas estáticas */
+/* overlay offline */
 #pf-offline{
   position:fixed;inset:0;background:#07090f;color:#dde6f5;
   display:none;align-items:center;justify-content:center;
@@ -73,17 +73,21 @@ body{background:#07090f;font-family:sans-serif}
 
 <script>
 (function(){
-  var GHBASE   = 'https://gigllyan.github.io/p';
-  var TUNNEL_BASE = window.location.origin;  // túnel atual
-  var LINK_TXT = TUNNEL_BASE + '/link.txt';
-  var IFRAME_TIMEOUT = 15000;
+  var GHBASE      = 'https://gigllyan.github.io/p';
+  var TUNNEL_BASE = window.location.origin;
+  var LINK_TXT    = TUNNEL_BASE + '/link.txt';
+  var IFRAME_TIMEOUT = 14000;
 
   var iframe  = document.getElementById('pf-iframe');
   var loader  = document.getElementById('pf-loader');
   var offline = document.getElementById('pf-offline');
+  var iframeTimer = null;
 
-  function isProjectUrl(url) {
-    return url.includes('/project.php') || url.includes('?project=');
+  function showOffline() {
+    if (iframeTimer) clearTimeout(iframeTimer);
+    iframe.src = 'about:blank';
+    loader.classList.add('hidden');
+    offline.classList.add('show');
   }
 
   function toGithubUrl(internalUrl) {
@@ -96,34 +100,86 @@ body{background:#07090f;font-family:sans-serif}
         var proj = params.get('project');
         var file = params.get('file') || 'index.php';
         var gh = GHBASE + '/?project=' + encodeURIComponent(proj);
-        if (file !== 'index.php') gh += '&file=' + encodeURIComponent(file);
+        if (file && file !== 'index.php') gh += '&file=' + encodeURIComponent(file);
         return gh;
       }
-      if (u.pathname.includes('/projects.php')) return GHBASE + '/?page=projects';
-      if (u.pathname.includes('/admin/')) return GHBASE; // não redireciona admin
+      if (u.pathname.includes('/projects.php') || params.get('page') === 'projects') {
+        return GHBASE + '/?page=projects';
+      }
       return GHBASE;
     } catch(e) { return GHBASE; }
   }
 
   function showIframe(tunnel) {
     offline.classList.remove('show');
-    var params = new URLSearchParams(window.location.search);
+    var params  = new URLSearchParams(window.location.search);
     var project = params.get('project');
-    var file = params.get('file') || 'index.php';
-    var base = tunnel.replace(/\/+$/, '');
-    var dest = base;
+    var file    = params.get('file') || 'index.php';
+    var base    = tunnel.replace(/\/+$/, '');
+    var dest;
 
     if (project) {
-      dest = base + '/project.php?project=' + encodeURIComponent(project) + '&file=' + encodeURIComponent(file);
+      dest = base + '/project.php?project=' + encodeURIComponent(project)
+           + '&file=' + encodeURIComponent(file);
+      // Preserva outros parâmetros
+      params.forEach(function(v,k){
+        if (k!=='project' && k!=='file') dest += '&' + k + '=' + encodeURIComponent(v);
+      });
     } else if (params.get('page') === 'projects') {
       dest = base + '/projects.php';
+    } else {
+      dest = base + '/';
     }
+
+    if (iframeTimer) clearTimeout(iframeTimer);
+    iframeTimer = setTimeout(function() {
+      fetch(LINK_TXT + '?_=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.text())
+        .then(txt => {
+          var url = txt.trim();
+          if (url && url !== 'offline' && url !== 'manutencao' && url.startsWith('http') && url !== tunnel) {
+            showIframe(url);
+          } else {
+            showOffline();
+          }
+        })
+        .catch(() => showOffline());
+    }, IFRAME_TIMEOUT);
+
+    iframe.onload = function() {
+      if (iframeTimer) clearTimeout(iframeTimer);
+      loader.classList.add('hidden');
+      // Atualiza URL do GitHub Pages
+      var ghUrl = toGithubUrl(iframe.contentWindow.location.href);
+      history.replaceState(null, '', ghUrl);
+    };
 
     iframe.src = dest;
   }
 
-  function probeAndLoad() {
-    fetch(LINK_TXT + '?_=' + Date.now(), {cache:'no-store'})
+  function probeTunnel(url, callback) {
+    var pingUrl = url.replace(/\/+$/, '') + '/ping.php';
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(() => {
+      if (controller) controller.abort();
+      callback(false);
+    }, 6000);
+
+    fetch(pingUrl, { 
+      method: 'GET', 
+      mode: 'cors', 
+      cache: 'no-store',
+      signal: controller ? controller.signal : undefined 
+    })
+    .then(res => { clearTimeout(timer); callback(res.ok); })
+    .catch(() => { clearTimeout(timer); callback(false); });
+  }
+
+  window.init = function() {
+    offline.classList.remove('show');
+    loader.classList.remove('hidden');
+
+    fetch(LINK_TXT + '?_=' + Date.now(), { cache: 'no-store' })
       .then(r => r.text())
       .then(txt => {
         var url = txt.trim();
@@ -131,40 +187,33 @@ body{background:#07090f;font-family:sans-serif}
           showOffline();
           return;
         }
-        showIframe(url);
+        probeTunnel(url, function(alive) {
+          if (alive) {
+            showIframe(url);
+          } else {
+            showOffline();
+            setTimeout(() => {
+              if (offline.classList.contains('show')) window.init();
+            }, 25000);
+          }
+        });
       })
       .catch(() => showOffline());
-  }
+  };
 
-  function showOffline() {
-    iframe.src = 'about:blank';
-    loader.classList.add('hidden');
-    offline.classList.add('show');
-  }
-
-  // Intercepta navegação dentro do iframe
+  // Comunicação com o iframe (projetos internos)
   window.addEventListener('message', function(e) {
+    if (!e.data || typeof e.data !== 'object') return;
     if (e.data.type === 'pf-navigate') {
       iframe.src = e.data.iframeSrc;
-      history.replaceState(null, '', e.data.githubUrl);
+      history.replaceState(null, '', e.data.githubUrl || toGithubUrl(e.data.iframeSrc));
     } else if (e.data.type === 'pf-urlchange') {
       history.replaceState(null, '', e.data.githubUrl);
     }
   });
 
-  // Notifica pai ao mudar URL interna
-  function notifyParent() {
-    var ghUrl = toGithubUrl(window.location.href);
-    window.parent.postMessage({type: 'pf-urlchange', githubUrl: ghUrl}, '*');
-  }
-
-  iframe.addEventListener('load', function() {
-    loader.classList.add('hidden');
-    notifyParent();
-  });
-
   // Inicia
-  probeAndLoad();
+  window.init();
 })();
 </script>
 </body>
