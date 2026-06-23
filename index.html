@@ -1,49 +1,229 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Portfólio · Gko — Offline</title>
+<title>Portfólio · Gko</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@300;400&display=swap');
-:root{--bg:#07090f;--card:#111820;--border:#1c2535;--accent2:#38bdf8;--muted:#5d7a9b;--text:#dde6f5;--warn:#ef4444}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.5rem}
-.card{position:relative;z-index:1;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2.4rem 2rem;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.55);text-align:center}
-.badge{display:inline-flex;align-items:center;gap:.5rem;font-family:'DM Mono',monospace;font-size:.72rem;border-radius:20px;padding:.3rem .9rem;margin-bottom:1.8rem;border:1px solid;color:var(--warn);border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--warn);animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-h1{font-size:clamp(1.8rem,6vw,2.6rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:.6rem}
-h1 em{font-style:normal;background:linear-gradient(125deg,var(--warn),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.sub{font-size:.9rem;color:var(--muted);margin-bottom:1.8rem;line-height:1.6}
-.msg{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:12px;padding:1.4rem;font-size:.88rem;color:var(--text);margin-bottom:2rem;line-height:1.7}
-.links{display:flex;flex-direction:column;gap:.6rem;margin-top:1.2rem}
-.contact-link{display:flex;align-items:center;gap:.75rem;padding:.75rem .9rem;background:#0d1117;border:1px solid var(--border);border-radius:10px;text-decoration:none;color:var(--text);font-size:.88rem;transition:all .2s}
-.contact-link:hover{border-color:var(--warn);color:var(--warn);transform:translateX(4px)}
-.ts{margin-top:2rem;font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);opacity:.5}
-</style></head><body>
-<div class="card">
-  <div class="badge"><span class="dot"></span> servidor offline</div>
-  <h1>Gko<br><em>Portfólio</em></h1>
-  <p class="sub">Desenvolvedor Full Stack · PHP · JS · Mobile</p>
-  <div class="msg">😴 O servidor está temporariamente offline.<br>Deixe uma mensagem — responderei em breve!</div>
-  <div class="links">
-    <div style="font-size:.75rem;font-weight:700;letter-spacing:.1em;color:var(--muted);margin-bottom:.8rem">ENTRE EM CONTATO</div>
-    <a href="https://github.com/gigllyan" target="_blank" class="contact-link"><span>⌥</span><span>Github</span></a><a href="https://linkedin.com/in/Gigllyan" target="_blank" class="contact-link"><span>in</span><span>Linkedin</span></a><a href="mailto:contato@exemplo.com" target="_blank" class="contact-link"><span>✉</span><span>Email</span></a><a href="https://instagram.com/gigllyan" target="_blank" class="contact-link"><span>📷</span><span>Instagram</span></a><a href="https://facebook.com/gigllyan" target="_blank" class="contact-link"><span>f</span><span>Facebook</span></a><a href="https://x.com/gigllyan" target="_blank" class="contact-link"><span>𝕏</span><span>Twitter</span></a><a href="https://wa.me/11999999999" target="_blank" class="contact-link"><span>💬</span><span>Whatsapp</span></a>
-  </div>
-  <div class="ts">Atualizado: 23/06/2026 00:00</div>
+html,body{height:100%;overflow:hidden}
+body{background:#07090f;font-family:sans-serif}
+#pf-iframe{display:block;width:100%;height:100vh;border:none}
+#pf-loader{
+  position:fixed;inset:0;background:#07090f;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:1rem;color:#4fffb0;z-index:99;
+  transition:opacity .5s
+}
+#pf-loader.hidden{opacity:0;pointer-events:none}
+.pf-dot{width:10px;height:10px;border-radius:50%;background:#4fffb0;animation:pulse 1.2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.7)}}
+.pf-label{font-size:.8rem;color:#5d7a9b}
+/* overlay offline */
+#pf-offline{
+  position:fixed;inset:0;background:#07090f;color:#dde6f5;
+  display:none;align-items:center;justify-content:center;
+  padding:1.5rem;z-index:99;font-family:'Syne',sans-serif
+}
+#pf-offline.show{display:flex}
+#pf-offline .card{background:#111820;border:1px solid #1c2535;border-radius:20px;
+  padding:2.4rem 2rem;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,.55);text-align:center}
+#pf-offline .badge{display:inline-flex;align-items:center;gap:.5rem;font-family:'DM Mono',monospace;
+  font-size:.72rem;border-radius:20px;padding:.3rem .9rem;margin-bottom:1.8rem;border:1px solid;
+  color:#ef4444;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.07)}
+#pf-offline .dot{width:7px;height:7px;border-radius:50%;background:#ef4444;animation:pulse 1.5s infinite}
+#pf-offline h1{font-size:clamp(1.8rem,6vw,2.6rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:.6rem}
+#pf-offline h1 em{font-style:normal;background:linear-gradient(125deg,#ef4444,#38bdf8);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+#pf-offline .sub{font-size:.9rem;color:#5d7a9b;margin-bottom:1.8rem;line-height:1.6}
+#pf-offline .msg{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:12px;
+  padding:1.4rem;font-size:.88rem;color:#fca5a5;margin-bottom:2rem;line-height:1.7}
+#pf-offline .links{display:flex;flex-direction:column;gap:.6rem;margin-top:1.2rem}
+#pf-offline .contact-link{display:flex;align-items:center;gap:.75rem;padding:.75rem .9rem;background:#0d1117;
+  border:1px solid #1c2535;border-radius:10px;text-decoration:none;color:#dde6f5;font-size:.88rem;transition:all .2s}
+#pf-offline .contact-link:hover{border-color:#ef4444;color:#ef4444;transform:translateX(4px)}
+#pf-offline .pf-retry{margin-top:1.4rem;padding:.6rem 1.4rem;background:#1a2a3a;border:1px solid #2a4a6a;
+  border-radius:8px;color:#4fffb0;cursor:pointer;font-size:.85rem;font-family:inherit}
+#pf-offline .pf-retry:hover{background:#2a3a4a}
+</style>
+</head>
+<body>
+
+<div id="pf-loader">
+  <div class="pf-dot"></div>
+  <div class="pf-label">carregando portfólio...</div>
 </div>
+
+<div id="pf-offline">
+  <div class="card">
+    <div class="badge"><span class="dot"></span> tunnel offline</div>
+    <h1>Gko<br><em>Portfólio</em></h1>
+    <p class="sub">Desenvolvedor Full Stack · PHP · JS · Mobile</p>
+    <div class="msg">📡 O túnel de conexão caiu.<br>Tentando reconectar automaticamente...</div>
+    <div class="links">
+      <div style="font-size:.75rem;font-weight:700;letter-spacing:.1em;color:#5d7a9b;margin-bottom:.8rem">ENTRE EM CONTATO</div>
+      <a href="https://github.com/gigllyan" target="_blank" class="contact-link"><span>⌥</span><span>Github</span></a><a href="https://linkedin.com/in/Gigllyan" target="_blank" class="contact-link"><span>in</span><span>Linkedin</span></a><a href="mailto:contato@exemplo.com" target="_blank" class="contact-link"><span>✉</span><span>Email</span></a><a href="https://instagram.com/gigllyan" target="_blank" class="contact-link"><span>📷</span><span>Instagram</span></a><a href="https://facebook.com/gigllyan" target="_blank" class="contact-link"><span>f</span><span>Facebook</span></a><a href="https://x.com/gigllyan" target="_blank" class="contact-link"><span>𝕏</span><span>Twitter</span></a><a href="https://wa.me/11999999999" target="_blank" class="contact-link"><span>💬</span><span>Whatsapp</span></a>
+    </div>
+    <button class="pf-retry" onclick="window.init()">Tentar novamente</button>
+  </div>
+</div>
+
+<iframe id="pf-iframe" src="about:blank" title="Portfólio Gko"></iframe>
+
 <script>
 (function(){
-  var LINK = window.location.origin + window.location.pathname.replace(/index\.html$/,'').replace(/\/+$/,'') + '/link.txt';
-  setInterval(function(){
-    fetch(LINK + '?_=' + Date.now(), {cache:'no-store'})
-      .then(function(r){ return r.text(); })
-      .then(function(txt){
-        var v = txt.trim();
-        if (v && v !== 'offline' && v !== 'manutencao' && v.indexOf('http') === 0) {
-          location.reload();
+  var GHBASE      = 'https://gigllyan.github.io/p';
+  var LINK_TXT    = GHBASE + '/link.txt';
+  var IFRAME_TIMEOUT = 14000;
+
+  var iframe  = document.getElementById('pf-iframe');
+  var loader  = document.getElementById('pf-loader');
+  var offline = document.getElementById('pf-offline');
+  var iframeTimer = null;
+
+  function showOffline() {
+    if (iframeTimer) clearTimeout(iframeTimer);
+    iframe.src = 'about:blank';
+    loader.classList.add('hidden');
+    offline.classList.add('show');
+  }
+
+  function toGithubUrl(internalUrl) {
+    if (!internalUrl) return GHBASE;
+    try {
+      var u = new URL(internalUrl, GHBASE);
+      
+      var params = new URLSearchParams(u.search);
+      
+      if (params.has('project')) {
+        var proj = params.get('project');
+        var file = params.get('file') || 'index.php';
+        var gh = GHBASE + '/?project=' + encodeURIComponent(proj);
+        if (file && file !== 'index.php') gh += '&file=' + encodeURIComponent(file);
+        return gh;
+      }
+      if (u.pathname.includes('/projects.php') || params.get('page') === 'projects') {
+        return GHBASE + '/?page=projects';
+      }
+      return GHBASE;
+    } catch(e) { return GHBASE; }
+  }
+
+  function showIframe(tunnel) {
+    offline.classList.remove('show');
+    var params  = new URLSearchParams(window.location.search);
+    var project = params.get('project');
+    var file    = params.get('file') || 'index.php';
+    var base    = tunnel.replace(/\/+$/, '');
+    var dest;
+
+    if (project) {
+      dest = base + '/project.php?project=' + encodeURIComponent(project)
+           + '&file=' + encodeURIComponent(file);
+      // Preserva outros parâmetros
+      params.forEach(function(v,k){
+        if (k!=='project' && k!=='file') dest += '&' + k + '=' + encodeURIComponent(v);
+      });
+    } else if (params.get('page') === 'projects') {
+      dest = base + '/projects.php';
+    } else {
+      dest = base + '/';
+    }
+
+    if (iframeTimer) clearTimeout(iframeTimer);
+    iframeTimer = setTimeout(function() {
+      fetch(LINK_TXT + '?_=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.text())
+        .then(txt => {
+          var url = txt.trim();
+          if (url && url !== 'offline' && url !== 'manutencao' && url.startsWith('http') && url !== tunnel) {
+            showIframe(url);
+          } else {
+            showOffline();
+          }
+        })
+        .catch(() => showOffline());
+    }, IFRAME_TIMEOUT);
+
+    iframe.onload = function() {
+      if (iframeTimer) clearTimeout(iframeTimer);
+      loader.classList.add('hidden');
+      // Não dá pra ler iframe.contentWindow.location aqui: o iframe é
+      // cross-origin (domínio do tunnel ≠ gigllyan.github.io), o
+      // navegador bloqueia essa leitura. A sincronização da URL vem
+      // via postMessage('pf-urlchange') enviado pelo projeto — ver
+      // o listener de 'message' abaixo e project.php.
+    };
+
+    iframe.src = dest;
+  }
+
+  function probeTunnel(url, callback) {
+    var pingUrl = url.replace(/\/+$/, '') + '/ping.php';
+    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = setTimeout(() => {
+      if (controller) controller.abort();
+      callback(false);
+    }, 6000);
+
+    fetch(pingUrl, { 
+      method: 'GET', 
+      mode: 'cors', 
+      cache: 'no-store',
+      signal: controller ? controller.signal : undefined 
+    })
+    .then(res => { clearTimeout(timer); callback(res.ok); })
+    .catch(() => { clearTimeout(timer); callback(false); });
+  }
+
+  window.init = function() {
+    offline.classList.remove('show');
+    loader.classList.remove('hidden');
+
+    fetch(LINK_TXT + '?_=' + Date.now(), { cache: 'no-store' })
+      .then(r => r.text())
+      .then(txt => {
+        var url = txt.trim();
+        if (!url || url === 'offline' || url === 'manutencao' || !url.startsWith('http')) {
+          showOffline();
+          return;
         }
+        probeTunnel(url, function(alive) {
+          if (alive) {
+            showIframe(url);
+          } else {
+            showOffline();
+            setTimeout(() => {
+              if (offline.classList.contains('show')) window.init();
+            }, 25000);
+          }
+        });
       })
-      .catch(function(){});
-  }, 15000);
+      .catch(() => showOffline());
+  };
+
+  // Comunicação com o iframe (projetos internos)
+  window.addEventListener('message', function(e) {
+    if (!e.data || typeof e.data !== 'object') return;
+    if (e.data.type === 'pf-navigate') {
+      iframe.src = e.data.iframeSrc;
+      history.replaceState(null, '', e.data.githubUrl || toGithubUrl(e.data.iframeSrc));
+    } else if (e.data.type === 'pf-urlchange') {
+      var gh = e.data.githubUrl;
+      if (!gh && e.data.project) {
+        gh = GHBASE + '/?project=' + encodeURIComponent(e.data.project);
+        if (e.data.file && e.data.file !== 'index.php') {
+          gh += '&file=' + encodeURIComponent(e.data.file);
+        }
+      }
+      if (gh) history.replaceState(null, '', gh);
+    }
+  });
+
+  // Inicia
+  window.init();
 })();
 </script>
-</body></html>
+</body>
+</html>
